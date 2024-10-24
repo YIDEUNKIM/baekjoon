@@ -5,7 +5,6 @@ public class Main {
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
 
-        // 배열 입력 받기
         int n = input.nextInt();
         int p = input.nextInt();
         int q = input.nextInt();
