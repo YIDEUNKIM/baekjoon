@@ -12,8 +12,8 @@ public class Main {
             return;
         }
 
-        long count = 0;
-        long result = 0;
+        long count = 0; 
+        long result = 0; //count와  result가 int를 넘어가서 long으로 선언해줘야함
 
         for(int i=0; i<ball.length(); i++) {
             if(ball.charAt(i) == '0'){
