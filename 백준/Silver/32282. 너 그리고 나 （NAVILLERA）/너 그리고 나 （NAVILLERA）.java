@@ -1,6 +1,7 @@
 
 import java.util.*;
 
+
 public class Main {
 
     public static void main(String[] args) {
@@ -25,14 +26,11 @@ public class Main {
         }
 
         else {
-            while (true) {
-                sum += c;
-                count++;
-                if (sum >= xy) {
-                    System.out.println(count);
-                    break;
-                }
+            if(xy % c == 0){
+                System.out.println((int)xy/c);
             }
+            else
+                System.out.println((int)xy/c+1);
         }
 
 
