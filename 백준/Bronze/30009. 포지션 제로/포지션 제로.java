@@ -1,18 +1,17 @@
 
 import java.util.*;
 
-
-public class Main {
+class Main {
 
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
         int n = input.nextInt();
         int x = input.nextInt(); // 포지션 제로 중심 (x,y) 포지션 제로는 원으로 표현
-        int y = input.nextInt(); //
+        int y = input.nextInt(); // 사실상 y는 사용되지 않음
         int r = input.nextInt(); // 반지름
 
-        int [] count_line = new int[1];
-        int [] count_in = new int[1];
+        int count_line = 0;
+        int count_in = 0;
 
 
         int [] t_i = new int[n];
@@ -26,14 +25,14 @@ public class Main {
 
         for(int i=0; i<n; i++) {
             if (r*r == (x - t_i[i])*(x - t_i[i])) {
-                count_line[0]++;
+                count_line++;
             }
             else if (r*r > (x - t_i[i])*(x - t_i[i])) {
-                count_in[0]++;
+                count_in++;
             }
         }
 
-        System.out.println(count_in[0] +" "+ count_line[0]);
+        System.out.println(count_in +" "+ count_line);
 
     }
 }
