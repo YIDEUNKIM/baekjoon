@@ -70,6 +70,6 @@ public class Main {
             }
         }
         
-        return left;
+        return right;
     }
 }
