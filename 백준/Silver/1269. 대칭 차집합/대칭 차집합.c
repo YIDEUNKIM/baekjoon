@@ -1,105 +1,153 @@
 #include <stdio.h>
 #include <stdlib.h>
-typedef struct BSTNode {
-  int key;
-  struct BSTNode* left;
-  struct BSTNode* right;
-} BSTNode;
 
-BSTNode* CreateNode(int key) {
-  BSTNode* new_node = (BSTNode*)malloc(sizeof(BSTNode));
-  if (new_node == NULL) {
-    printf("Memory allocation failed in function CreateNode"); // 메모리 꽉참
+#define initialCapacity 100003
+#define kLoadFactorThreshold 0.75
+
+typedef struct Node {
+  int key;
+  struct Node* next;
+} Node;
+
+typedef struct HashTable {
+  Node ** buckets;
+  int capacity;
+  int size;
+} HashTable;
+
+int Hash(int key, int capacity) {
+  return (key%capacity + capacity) % capacity;
+}
+
+Node * CreateNode(int key) {
+  Node * newNode = (Node *) malloc(sizeof(Node));
+  if (newNode == NULL) {  // NULL 체크 추가
+    exit(1);
+  }
+  newNode -> key = key;
+  newNode -> next = NULL;
+  return newNode;
+}
+
+HashTable * CreateHashTable() {
+  HashTable * table = (HashTable *) malloc(sizeof(HashTable));
+
+  if (table == NULL) {
     exit(1);
   }
 
-  new_node->key = key;
-  new_node->left = NULL;
-  new_node->right = NULL;
-  return new_node;
+  table -> capacity = initialCapacity;
+  table -> size = 0;
+
+  table -> buckets = (Node **) calloc(table -> capacity, sizeof(Node *));
+
+  if (table -> buckets == NULL) {
+    free(table);
+    exit(1);
+  }
+  return table;
 }
 
-BSTNode* Insert(BSTNode* root, int key) {
-  if (root == NULL)
-    return CreateNode(key);
+void ResizeHashTable(HashTable* table) {
+  int oldCapacity = table -> capacity;
+  Node ** oldBuckets = table -> buckets;
 
-  if (key < root->key) {
-    root -> left = Insert(root->left, key);
+  table -> capacity = 2 * oldCapacity;
+
+  table->buckets = (Node**)calloc(table->capacity, sizeof(Node*));
+
+  if (table -> buckets == NULL) {
+    table -> buckets = oldBuckets;
+    table -> capacity = oldCapacity;
+    return;
   }
 
-  else if (key > root->key) {
-    root->right =  Insert(root->right, key);
+  for (int i =0; i<oldCapacity; i++) {
+    Node * current = oldBuckets[i];
+    while (current != NULL) {
+      Node * nodeToRehash = current;
+      current = current -> next;
+
+      int newIndex = Hash(nodeToRehash -> key, table -> capacity);
+
+      nodeToRehash -> next = table -> buckets[newIndex];
+      table -> buckets[newIndex] = nodeToRehash;
+    }
   }
-  return root;
+  free(oldBuckets);
 }
 
-int Search(BSTNode* root, int key) {
-  if (root == NULL)
-    return 0;
+void Insert(HashTable * table, int key) {
+  int index = Hash(key, table->capacity);
 
-  if (root->key == key)
-    return 1;
+  Node * current = table -> buckets[index];
 
-  if (key > root->key)
-    return Search(root->right, key);
-
-  return Search(root->left, key);
-}
-
-int CountNodes(BSTNode* root) {
-  if (root == NULL)
-    return 0;
-
-  return 1 + CountNodes(root->left) + CountNodes(root->right);
-}
-
-void FreeTree(BSTNode* root) {
-    if (root == NULL) {
+  // 중복 값 검사
+  while(current != NULL) {
+    if (current -> key == key) {
       return;
     }
-    FreeTree(root->left);
-    FreeTree(root->right);
-    free(root);
+    current = current -> next;
+  }
 
+  Node * new_node = CreateNode(key);
+  new_node -> next = table -> buckets[index];
+  table -> buckets[index] = new_node;
+  table -> size++;
+
+  if ((double)table -> size / table -> capacity > kLoadFactorThreshold) {
+    ResizeHashTable(table);
+  }
 }
 
+int Search(HashTable * table, int key) {
+  int index = Hash(key, table->capacity);
+  Node * current = table -> buckets[index];
+
+  while(current != NULL) {
+    if (current -> key == key) {
+      return 1;
+    }
+    current = current -> next;
+  }
+  return 0;
+}
 
 int main() {
-    int a_len;
-    int b_len;
+  int N, M;
+  scanf("%d %d", &N, &M);
 
-    BSTNode* set_a = NULL;
-    BSTNode* set_b = NULL;
+  HashTable * a_table = CreateHashTable();
+  HashTable * b_table = CreateHashTable();
 
-    scanf("%d %d", &a_len, &b_len);
+  int a_element = 0;
+  int b_element = 0;
+  int both_number = 0;
 
-    // 여기에 배열을 사용하는 코드를 추가
-    for(int i=0; i<a_len; i++) {
-      int a;
-      scanf("%d", &a);
-      set_a = Insert(set_a, a);
+  for (int i=0; i<N; i++) {
+    int element;
+    scanf("%d", &element);
+    Insert(a_table, element);
+    a_element ++;
+  }
+
+  for (int i=0; i<M; i++) {
+    int element;
+    scanf("%d", &element);
+
+    if (Search(a_table, element) == 1) {
+      both_number += 1;
     }
-
-    int in_both_sets = 0; // 공집합 개수
-
-    for (int i = 0; i < b_len; i++) {
-        int b; //
-        scanf("%d", &b);
-
-        if (Search(set_a, b) == 1) { // set_a의 b의 요소가 있을 때,
-          in_both_sets++;
-        }
-        else{
-            set_b = Insert(set_b, b); // B-A 차집합
-        }
+    else{
+      Insert(b_table, element);
+      b_element++;
     }
+  }
 
-    int only_in_a = CountNodes(set_a) - in_both_sets; // A-B 차집합
-    int only_in_b = CountNodes(set_b); // B-A 차집합
+  int a_b = a_element - both_number;
+  int b_a = b_element;
 
-    printf("%d\n", only_in_a+only_in_b); // 결과값 출력
+  printf("%d", a_b + b_a);
 
-    FreeTree(set_a); // 메모리 없애주기
-    FreeTree(set_b);
-    return 0;
+  return 0;
 }
