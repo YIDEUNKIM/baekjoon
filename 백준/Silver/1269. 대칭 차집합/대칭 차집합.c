@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define initialCapacity 100003
 #define kLoadFactorThreshold 0.75
@@ -16,7 +17,16 @@ typedef struct HashTable {
 } HashTable;
 
 int Hash(int key, int capacity) {
-  return (key%capacity + capacity) % capacity;
+  uint32_t h = (uint32_t)key;  // 입력 키를 32비트 부호없는 정수로 변환
+
+  // MurmurHash3의 finalizer 부분
+  h ^= h >> 16;                // 상위 16비트를 하위 16비트와 XOR하여 비트 혼합
+  h *= 0x85ebca6b;            // 곱셈 상수를 이용한 비트 확산 (첫 번째 곱셈)
+  h ^= h >> 13;                // 상위 13비트를 하위 19비트와 XOR하여 추가 혼합
+  h *= 0xc2b2ae35;            // 곱셈 상수를 이용한 최종 비트 확산 (두 번째 곱셈)
+  h ^= h >> 16;                // 최종 상위 16비트와 하위 16비트 XOR로 균등 분산 완성
+
+  return h % capacity;         // 해시 테이블 크기로 모듈러 연산하여 인덱스 반환
 }
 
 Node * CreateNode(int key) {
@@ -77,7 +87,7 @@ void ResizeHashTable(HashTable* table) {
   free(oldBuckets);
 }
 
-void Insert(HashTable * table, int key) {
+void Insert(HashTable * table, int key) { // O(1)
   int index = Hash(key, table->capacity);
 
   Node * current = table -> buckets[index];
@@ -95,8 +105,8 @@ void Insert(HashTable * table, int key) {
   table -> buckets[index] = new_node;
   table -> size++;
 
-  if ((double)table -> size / table -> capacity > kLoadFactorThreshold) {
-    ResizeHashTable(table);
+  if ((double)table -> size / table -> capacity > kLoadFactorThreshold) { // kLoadFactorThreshold = 0.75
+    ResizeHashTable(table); // amortized O(1)
   }
 }
 
@@ -139,7 +149,6 @@ int main() {
       both_number += 1;
     }
     else{
-      Insert(b_table, element);
       b_element++;
     }
   }
