@@ -1,138 +1,130 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define initialCapacity 100003
-#define kLoadFactorThreshold 0.75
+#define initialSize 100002
+#define initialFactor 0.75
 
-typedef struct Node {
-    int key;
-    struct Node * next;
+
+typedef struct Node{
+  int key;
+  struct Node * next;
 } Node;
 
-typedef struct HashTable {
-    Node ** buckets;
-    int size;
-    int capacity;
+typedef struct HashTable{
+  Node ** buckets;
+  int capacity;
+  int size;
 } HashTable;
 
-Node * CreateNode(int key) {
-    Node * newNode = (Node *)malloc(sizeof(Node));
+HashTable * CreateHashTable() {
+  HashTable * table = (HashTable *)malloc(sizeof(HashTable));
 
-    if (newNode == NULL) {
-        exit(1);
-    }
-    newNode -> key = key;
-    newNode -> next = NULL;
+  table -> capacity = initialSize;
+  table -> size = 0;
+  table -> buckets = (Node **) calloc(table -> capacity, sizeof(Node *));
 
-    return newNode;
+  return table;
 }
 
-HashTable * CreateHashTable() {
-    HashTable * table = malloc(sizeof(HashTable));
-
-    table -> size = 0;
-    table -> capacity = initialCapacity;
-    table -> buckets = calloc(table -> capacity, sizeof(Node *));
-    return table;
+Node * CreateNode(int key) {
+  Node * newNode = (Node *)malloc(sizeof(Node));
+  newNode -> key = key;
+  newNode -> next = NULL;
+  return newNode;
 }
 
 int Hash(int key, int capacity) {
-    return (key%capacity + capacity)%capacity;
+  return (key%capacity + capacity) % capacity;
 }
 
-void Insert(HashTable * table, int key) {
-    int index = Hash(key, table->capacity);
+// Capacity를 두 배로 늘리고, 요소들을 재배치
+void ResizeHashTable(HashTable * table){
+  int oldCapacity = table -> capacity;
+  Node ** oldBuckets = table -> buckets;
 
-    Node * current = table -> buckets[index];
-    while (current != NULL) {
-        if (current -> key == key) {
-            return;
-        }
-        current = current -> next;
+  table -> capacity = oldCapacity * 2;
+  table -> buckets = (Node**)calloc(table -> capacity, sizeof(Node*));
+
+  if (table -> buckets == NULL) {
+    table -> buckets = oldBuckets;
+    table -> capacity = oldCapacity;
+    return;
+  }
+
+  for (int i=0; i< oldCapacity; i++) {
+    Node * current = oldBuckets[i];
+    while (current) {
+      Node * nodeReHash = current;
+      current = current -> next;
+      int newIndex = Hash(nodeReHash->key, table ->capacity);
+
+      nodeReHash -> next = table -> buckets[newIndex];
+      table -> buckets[newIndex] = nodeReHash;
     }
+  }
 
-    Node * newNode = CreateNode(key);
-    newNode -> next = table -> buckets[index];
-    table -> buckets[index] = newNode;
-    table->size++;
+  free(oldBuckets);
 }
 
-void ResizeHashTable(HashTable * table) {
-    Node ** oldBuckets = table -> buckets;
-    int oldCapacity = table -> capacity;
-    
-    table -> capacity = 2 * oldCapacity;
-    table -> buckets = (Node **)calloc(table->capacity, sizeof(Node*));
-    
-    if (table -> buckets == NULL) {
-        table -> buckets = oldBuckets;
-        table -> capacity = oldCapacity;
-        return;
-    }
+void insert(HashTable * table, int key) {
+  int index = Hash(key, table -> capacity);
 
-    for (int i=0; i<oldCapacity; i++) {
-        Node * current = oldBuckets[i];
-        while (current != NULL) {
-            Node * nodeToRehash = current;
-            current = current -> next;
-            
-            int newIndex = Hash(nodeToRehash -> key, table -> capacity);
-            
-            nodeToRehash -> next = table -> buckets[newIndex];
-            table -> buckets[newIndex] = nodeToRehash;
-        }
+  Node * current = table -> buckets[index];
+  // 중복 검사
+  while (current) {
+    if (current -> key == key) {
+      return;
     }
-    free(oldBuckets);
+    current = current -> next;
+  }
+
+
+  Node * newNode = CreateNode(key);
+  newNode -> next = table -> buckets[index];
+  table -> buckets[index] = newNode;
+  table -> size ++;
+
+  if ((double)table->size /table -> capacity >= initialFactor) {
+    ResizeHashTable(table);
+  }
 }
 
-int Search (HashTable * table, int key) {
-    int index = Hash(key, table -> capacity);
-    Node * current = table -> buckets[index];
+int Search(HashTable * table, int key) {
+  int index = Hash(key, table -> capacity);
+  Node * current = table -> buckets[index];
 
-    while (current != NULL) {
-        if (current -> key == key) {
-            return 1;
-        }
-        current = current -> next;
-
+  while (current) {
+    if (current -> key == key) {
+      return 1;
     }
-    return 0;
-}
+    current = current -> next;
+  }
 
-void FreeHashTable(HashTable * table) {
-    for (int i=0; i<table -> capacity; i++) {
-        Node * current = table -> buckets[i];
-        while (current != NULL) {
-            Node * tmp = current;
-            current = current -> next;
-            free(tmp);
-        }
-    }
-    free(table->buckets);
-    free(table);
+  return 0;
 }
 
 int main() {
-    int N, M;
+  int n;
+  int m;
 
-    HashTable * table = CreateHashTable();
+  HashTable * a_table = CreateHashTable();
 
-    scanf("%d", &N);
+  scanf("%d", &n);
+  for (int i=0; i<n; i++) {
+    int element;
+    scanf("%d", &element);
+    insert(a_table, element);
+  }
 
-    for (int i=0; i<N; i++) {
-        int element;
-        scanf("%d", &element);
-        Insert(table, element);
+  scanf("%d", &m);
+  for (int j=0; j<m; j++) {
+    int element;
+    scanf("%d", &element);
+    if (Search(a_table, element) == 1) {
+      printf("1\n");
+    }else{
+      printf("0\n");
     }
+  }
 
-    scanf("%d", &M);
-
-    for (int i=0; i<M; i++) {
-        int element;
-        scanf("%d", &element);
-        printf("%d\n", Search(table, element));
-    }
-
-    FreeHashTable(table);
-    return 0;
 }
