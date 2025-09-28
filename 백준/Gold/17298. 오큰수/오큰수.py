@@ -1,4 +1,9 @@
 # 오큰수
+
+
+
+import sys
+input = sys.stdin.readline
 n = int(input())
 
 a = list(map(int, input().split()))
@@ -17,5 +22,3 @@ while(stack):
 
 for i in range(n):
     print(str(ans[i]), end=" ")
-
-# 
