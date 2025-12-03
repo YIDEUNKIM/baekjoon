@@ -1,6 +1,5 @@
 import sys
 sys.setrecursionlimit(100000)
-input = sys.stdin.readline
 def union(a, b):
     a = find(a) # a의 부모 노드 찾기
     b = find(b) # b의 부모 노드 찾기
