@@ -1,42 +1,43 @@
 from collections import deque
+import sys
+input = sys.stdin.readline
 
 def dfs(start):
-    visited1[start] = True
+    visited[start] = True
+    print(start, end=" ")
+    for neighbor in graph[start]:
+        if not visited[neighbor]:
+            dfs(neighbor)
 
-    print(start, end=' ')
-
-    for i in range(1, n+1):
-        if not visited1[i] and matrix[start][i] == 1:
-            dfs(i)
-
-
-def bfs(v):
-    q = deque([v])
-
-    visited2[v] = True
+def bfs(start):
+    q = deque([start])
+    visited[start] = True
 
     while q:
-        v = q.popleft()
+        node = q.popleft()
 
-        print(v, end=' ')
+        print(node, end=" ")
+        for neighbor in graph[node]:
+            if not visited[neighbor]:
+                visited[neighbor] = True
+                q.append(neighbor)
 
-        for i in range(1, n+1):
-            if not visited2[i] and matrix[v][i] == 1:
-                q.append(i)
-                visited2[i] = True
 
 
 n, m, v = map(int, input().split())
 
-matrix = [[False]*(n+1) for _ in range(n+1)]
-visited1 = [False]*(n+1)
-visited2 = [False]*(n+1)
+graph = [[] for _ in range(n+1)]
 
-for i in range(m):
-    a, b = map(int, input().split())
-    matrix[a][b] = 1
-    matrix[b][a] = 1
+for _ in range(m):
+    x, y = map(int, input().split())
+    graph[x].append(y)
+    graph[y].append(x)
 
+for i in range(1, n+1):
+    graph[i].sort()
+
+visited = [False]*(n+1)
 dfs(v)
 print()
+visited = [False]*(n+1)
 bfs(v)
